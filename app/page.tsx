@@ -38,14 +38,20 @@ export default function HomePage() {
           
           <div className="mt-8 flex gap-4">
             <a 
-              href="/admin" 
+              href="/articles" 
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              📚 精选文章
+            </a>
+            <a 
+              href="/admin" 
+              className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors"
             >
               📊 管理面板
             </a>
             <a 
               href="/api/demo/publish" 
-              className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors"
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
             >
               🧪 测试发布
             </a>
