@@ -1,28 +1,58 @@
-import { q } from '@/lib/db'
+import { getPool } from '@/lib/db-connection'
 
 async function getRecentPicks() {
-  const { rows } = await q(`
-    SELECT p.*, r.stars_total, r.topics, a.title_en, a.title_cn, a.status as article_status
-    FROM picks p 
-    JOIN repos r ON p.repo_id = r.id 
-    LEFT JOIN articles a ON a.repo_id = p.repo_id AND a.id LIKE '%' || p.date || '%'
-    WHERE p.date >= CURRENT_DATE - INTERVAL '7 days'
-    ORDER BY p.date DESC, p.score DESC 
-    LIMIT 50
-  `)
-  return rows
+  const pool = getPool()
+  if (!pool) {
+    return []
+  }
+  
+  try {
+    const client = await pool.connect()
+    try {
+      const { rows } = await client.query(`
+        SELECT p.*, r.stars_total, r.topics, a.title_en, a.title_cn, a.status as article_status
+        FROM picks p 
+        JOIN repos r ON p.repo_id = r.id 
+        LEFT JOIN articles a ON a.repo_id = p.repo_id
+        WHERE p.date >= CURRENT_DATE - INTERVAL '7 days'
+        ORDER BY p.date DESC, p.score DESC 
+        LIMIT 50
+      `)
+      return rows
+    } finally {
+      client.release()
+    }
+  } catch (error) {
+    console.error('Failed to fetch recent picks:', error)
+    return []
+  }
 }
 
 async function getRecentPublishes() {
-  const { rows } = await q(`
-    SELECT pub.*, a.title_en, a.title_cn, a.repo_id
-    FROM publishes pub
-    JOIN articles a ON pub.article_id = a.id
-    WHERE pub.created_at >= NOW() - INTERVAL '7 days'
-    ORDER BY pub.created_at DESC
-    LIMIT 100
-  `)
-  return rows
+  const pool = getPool()
+  if (!pool) {
+    return []
+  }
+  
+  try {
+    const client = await pool.connect()
+    try {
+      const { rows } = await client.query(`
+        SELECT pub.*, a.title_en, a.title_cn, a.repo_id
+        FROM publishes pub
+        JOIN articles a ON pub.article_id = a.id
+        WHERE pub.created_at >= NOW() - INTERVAL '7 days'
+        ORDER BY pub.created_at DESC
+        LIMIT 100
+      `)
+      return rows
+    } finally {
+      client.release()
+    }
+  } catch (error) {
+    console.error('Failed to fetch recent publishes:', error)
+    return []
+  }
 }
 
 function formatDate(dateStr: string) {
@@ -191,24 +221,24 @@ export default async function AdminPage() {
 
         {/* 操作按钮 */}
         <div className="mt-8 flex gap-4">
-          <button 
-            onClick={() => window.location.href = '/api/cron/fetch'}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          <a 
+            href="/api/cron/fetch"
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 inline-block text-center"
           >
             🔄 手动抓取
-          </button>
-          <button 
-            onClick={() => window.location.href = '/api/cron/generate'}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          </a>
+          <a 
+            href="/api/cron/generate"
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 inline-block text-center"
           >
             ✍️ 生成文章
-          </button>
-          <button 
-            onClick={() => window.location.href = '/api/cron/render-publish'}
-            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+          </a>
+          <a 
+            href="/api/cron/render-publish"
+            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 inline-block text-center"
           >
             🚀 渲染发布
-          </button>
+          </a>
         </div>
       </div>
     </div>
