@@ -162,45 +162,50 @@ export async function getArticles(filters: ArticleFilters = {}) {
 }
 
 export async function getArticleById(id: string): Promise<Article | null> {
-  const { rows } = await sql`
-    SELECT 
-      a.*,
-      r.lang,
-      r.stars_total,
-      r.stars_7d,
-      r.topics,
-      r.homepage,
-      r.license,
-      json_agg(
-        json_build_object(
-          'platform', p.platform,
-          'post_url', p.post_url,
-          'status', p.status
-        )
-      ) FILTER (WHERE p.id IS NOT NULL) as publishes
-    FROM articles a
-    LEFT JOIN repos r ON a.repo_id = r.id
-    LEFT JOIN publishes p ON a.id = p.article_id
-    WHERE a.id = ${id}
-    GROUP BY a.id, r.lang, r.stars_total, r.stars_7d, r.topics, r.homepage, r.license
-  `
+  const client = await pool.connect()
+  try {
+    const { rows } = await client.query(`
+      SELECT 
+        a.*,
+        r.lang,
+        r.stars_total,
+        r.stars_7d,
+        r.topics,
+        r.homepage,
+        r.license,
+        json_agg(
+          json_build_object(
+            'platform', p.platform,
+            'post_url', p.post_url,
+            'status', p.status
+          )
+        ) FILTER (WHERE p.id IS NOT NULL) as publishes
+      FROM articles a
+      LEFT JOIN repos r ON a.repo_id = r.id
+      LEFT JOIN publishes p ON a.id = p.article_id
+      WHERE a.id = $1
+      GROUP BY a.id, r.lang, r.stars_total, r.stars_7d, r.topics, r.homepage, r.license
+    `, [id])
 
-  if (rows.length === 0) return null
+    if (rows.length === 0) return null
 
-  const row = rows[0]
-  return {
-    ...row,
-    repo: {
-      id: row.repo_id,
-      lang: row.lang,
-      stars_total: row.stars_total,
-      stars_7d: row.stars_7d,
-      topics: row.topics || [],
-      homepage: row.homepage,
-      license: row.license
-    },
-    publishes: row.publishes || []
-  } as Article
+    const row = rows[0]
+    return {
+      ...row,
+      repo: {
+        id: row.repo_id,
+        lang: row.lang,
+        stars_total: row.stars_total,
+        stars_7d: row.stars_7d,
+        topics: row.topics || [],
+        homepage: row.homepage,
+        license: row.license
+      },
+      publishes: row.publishes || []
+    } as Article
+  } finally {
+    client.release()
+  }
 }
 
 export async function getArticlesCount(filters: ArticleFilters = {}) {
@@ -233,35 +238,48 @@ export async function getArticlesCount(filters: ArticleFilters = {}) {
     ${whereClause}
   `
 
-  const { rows } = await sql.query(query, params)
-  return parseInt(rows[0].count)
+  const client = await pool.connect()
+  try {
+    const { rows } = await client.query(query, params)
+    return parseInt(rows[0].count)
+  } finally {
+    client.release()
+  }
 }
 
 export async function getLanguages() {
-  const { rows } = await sql`
-    SELECT DISTINCT r.lang as language, COUNT(*) as count
-    FROM articles a
-    LEFT JOIN repos r ON a.repo_id = r.id
-    WHERE a.status = 'published' AND r.lang IS NOT NULL
-    GROUP BY r.lang
-    ORDER BY count DESC
-  `
-
-  return rows
+  const client = await pool.connect()
+  try {
+    const { rows } = await client.query(`
+      SELECT DISTINCT r.lang as language, COUNT(*) as count
+      FROM articles a
+      LEFT JOIN repos r ON a.repo_id = r.id
+      WHERE a.status = 'published' AND r.lang IS NOT NULL
+      GROUP BY r.lang
+      ORDER BY count DESC
+    `)
+    return rows
+  } finally {
+    client.release()
+  }
 }
 
 export async function getPopularTags() {
-  const { rows } = await sql`
-    SELECT 
-      unnest(r.topics) as tag,
-      COUNT(*) as count
-    FROM articles a
-    LEFT JOIN repos r ON a.repo_id = r.id
-    WHERE a.status = 'published' AND r.topics IS NOT NULL
-    GROUP BY tag
-    ORDER BY count DESC
-    LIMIT 20
-  `
-
-  return rows
+  const client = await pool.connect()
+  try {
+    const { rows } = await client.query(`
+      SELECT 
+        unnest(r.topics) as tag,
+        COUNT(*) as count
+      FROM articles a
+      LEFT JOIN repos r ON a.repo_id = r.id
+      WHERE a.status = 'published' AND r.topics IS NOT NULL
+      GROUP BY tag
+      ORDER BY count DESC
+      LIMIT 20
+    `)
+    return rows
+  } finally {
+    client.release()
+  }
 }
