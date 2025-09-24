@@ -1,4 +1,10 @@
+import { Pool } from 'pg'
 import { query } from './db-connection'
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+})
 
 export interface Article {
   id: string
@@ -75,7 +81,7 @@ export async function getArticles(filters: ArticleFilters = {}) {
       break
   }
 
-  const query = `
+  const sqlQuery = `
     SELECT 
       a.*,
       r.lang,
@@ -92,12 +98,12 @@ export async function getArticles(filters: ArticleFilters = {}) {
 
   params.push(limit, offset)
 
-  const { rows } = await query(query, params)
+  const { rows } = await query(sqlQuery, params)
   return rows as Article[]
 }
 
 export async function getArticleById(id: string): Promise<Article | null> {
-  const query = `
+  const sqlQuery = `
     SELECT 
       a.*,
       r.lang,
@@ -110,13 +116,8 @@ export async function getArticleById(id: string): Promise<Article | null> {
     WHERE a.id = $1
   `
 
-  const client = await pool.connect()
-  try {
-    const { rows } = await client.query(query, [id])
-    return rows.length > 0 ? rows[0] as Article : null
-  } finally {
-    client.release()
-  }
+  const { rows } = await query(sqlQuery, [id])
+  return rows.length > 0 ? rows[0] as Article : null
 }
 
 export async function getArticlesCount(filters: ArticleFilters = {}) {
@@ -142,24 +143,19 @@ export async function getArticlesCount(filters: ArticleFilters = {}) {
     paramIndex++
   }
 
-  const query = `
+  const sqlQuery = `
     SELECT COUNT(*) as count
     FROM articles a
     LEFT JOIN repos r ON a.repo_id = r.id
     ${whereClause}
   `
 
-  const client = await pool.connect()
-  try {
-    const { rows } = await client.query(query, params)
-    return parseInt(rows[0].count)
-  } finally {
-    client.release()
-  }
+  const { rows } = await query(sqlQuery, params)
+  return parseInt(rows[0].count)
 }
 
 export async function getLanguages() {
-  const query = `
+  const sqlQuery = `
     SELECT DISTINCT r.lang as language, COUNT(*) as count
     FROM articles a
     LEFT JOIN repos r ON a.repo_id = r.id
@@ -168,11 +164,6 @@ export async function getLanguages() {
     ORDER BY count DESC
   `
 
-  const client = await pool.connect()
-  try {
-    const { rows } = await client.query(query)
-    return rows
-  } finally {
-    client.release()
-  }
+  const { rows } = await query(sqlQuery)
+  return rows
 }
