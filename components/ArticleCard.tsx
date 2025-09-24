@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Article } from '@/lib/articles-simple'
+import { Article } from '@/lib/articles-fixed'
 
 interface ArticleCardProps {
   article: Article

@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getArticleById } from '@/lib/articles-simple'
+import { getArticleById } from '@/lib/articles-fixed'
 import { MarkdownRenderer } from '@/components/MarkdownRenderer'
 import { ShareButtons } from '@/components/ShareButtons'
 

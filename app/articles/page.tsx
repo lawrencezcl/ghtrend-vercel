@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { getArticles, getArticlesCount, getLanguages, ArticleFilters } from '@/lib/articles-simple'
+import { getArticles, getArticlesCount, getLanguages, ArticleFilters } from '@/lib/articles-fixed'
 import { ArticleCard } from '@/components/ArticleCard'
 import { SearchAndFilters } from '@/components/SearchAndFilters'
 import { Pagination } from '@/components/Pagination'

@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { ArticleFilters } from '@/lib/articles-simple'
+import { ArticleFilters } from '@/lib/articles-fixed'
 
 interface SearchAndFiltersProps {
   filters: ArticleFilters
