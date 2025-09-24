@@ -1,0 +1,6 @@
+import { NextRequest, NextResponse } from 'next/server'; import { q } from '@/lib/db'; import crypto from 'node:crypto'
+export const maxDuration=120
+function eq(a:string,b:string){ const A=Buffer.from(a,'hex'),B=Buffer.from(b,'hex'); if(A.length!==B.length) return false; return crypto.timingSafeEqual(A,B) }
+export async function POST(req:NextRequest){ const ts=Number(req.headers.get('x-timestamp')||0); const sig=(req.headers.get('x-signature')||'').toLowerCase(); const secret=process.env.WEBHOOK_CALLBACK_SECRET||''
+  if(Math.abs(Date.now()/1000 - ts)>300) return NextResponse.json({error:'timestamp skew'},{status:401}); const raw=await req.text(); const expect=crypto.createHmac('sha256',secret).update(`${ts}.${raw}`).digest('hex'); if(!eq(expect,sig)) return NextResponse.json({error:'bad signature'},{status:401})
+  const b=JSON.parse(raw); await q('update publishes set status=$1, post_url=$2, post_id=$3 where article_id=$4 and platform=$5',[b.status||'sent',b.post_url||'',b.post_id||'',b.article_id,b.platform]); return NextResponse.json({ok:true}) }

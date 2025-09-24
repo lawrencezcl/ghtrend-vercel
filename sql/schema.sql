@@ -1,0 +1,6 @@
+
+create table if not exists repos (id text primary key, lang text, stars_total int default 0, stars_7d int default 0, topics jsonb default '[]'::jsonb, readme_excerpt text, homepage text, license text, owner_type text, created_at timestamptz default now());
+create table if not exists picks (id text primary key, repo_id text not null references repos(id), score double precision not null, reason text, date date not null);
+create table if not exists articles (id text primary key, repo_id text not null references repos(id), title_cn text, title_en text, summary_cn text, summary_en text, body_cn_md text, body_en_md text, assets jsonb default '[]'::jsonb, status text default 'draft', created_at timestamptz default now());
+create table if not exists publishes (id text primary key, article_id text not null references articles(id), platform text not null, post_url text, post_id text, status text default 'queued', retries int default 0, created_at timestamptz default now());
+create table if not exists metrics (id bigserial primary key, publish_id text not null references publishes(id), views int default 0, likes int default 0, comments int default 0, shares int default 0, collected_at timestamptz default now());

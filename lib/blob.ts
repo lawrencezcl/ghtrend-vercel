@@ -1,0 +1,1 @@
+import { put } from '@vercel/blob'; export async function saveBlob(path:string, data:string|Uint8Array, contentType:string){ const r=await put(path,data,{access:'public',contentType,token:process.env.BLOB_READ_WRITE_TOKEN}); return r.url }

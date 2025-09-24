@@ -1,0 +1,23 @@
+{
+  "functions": {
+    "app/api/**/route.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 300,
+      "memory": 1024
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/fetch",
+      "schedule": "0 13,16 * * *"
+    },
+    {
+      "path": "/api/cron/generate",
+      "schedule": "5 13,16 * * *"
+    },
+    {
+      "path": "/api/cron/render-publish",
+      "schedule": "15 13,16 * * *"
+    }
+  ]
+}

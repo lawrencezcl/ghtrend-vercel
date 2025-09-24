@@ -1,0 +1,3 @@
+export async function publishDevto(p:{title:string,markdown:string,tags?:string[],description?:string,cover?:string}){
+  const key=process.env.DEVTO_API_KEY!; const r=await fetch('https://dev.to/api/articles',{method:'POST',headers:{'content-type':'application/json','api-key':key},body:JSON.stringify({article:{title:p.title,body_markdown:p.markdown,published:true,tags:p.tags??['github','trending'],description:p.description,cover_image:p.cover}})})
+  const j=await r.json(); if(!r.ok) throw new Error('devto '+JSON.stringify(j)); return {url:j.url,id:String(j.id)} }
